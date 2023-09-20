@@ -108,13 +108,13 @@ class Trainer:
                                 text.append(doc.split('The diagnosis is ')[0])
                                 question.append('What will this subject be diagnosed with?') # hard coded
                                 label = doc.split('The diagnosis is ')[1].split('.')[0]
-                                label = label.replace('AD','Dementia')
-                                label = label.replace('Demented','Dementia')
-                                label = label.replace('NC','Not demented')
-                                label = label.replace('CN','Not demented')
-                                label = label.replace('Nondemented','Not demented')
-                                label = label.replace('control','Not demented')
-                                label = label.replace('MCI','mild cognitive impairment (MCI)')
+                                # label = label.replace('AD','Dementia')
+                                # label = label.replace('Demented','Dementia')
+                                # label = label.replace('NC','Not demented')
+                                # label = label.replace('CN','Not demented')
+                                # label = label.replace('Nondemented','Not demented')
+                                # label = label.replace('control','Not demented')
+                                # label = label.replace('MCI','mild cognitive impairment (MCI)')
                                 answer.append(label)
                                 tq.append(doc.split('The diagnosis is ')[0] + 'Question: What will this subject be diagnosed with? Answer: ')
 
@@ -150,13 +150,13 @@ class Trainer:
                                 text.append(doc.split('The diagnosis is ')[0])
                                 question.append('What will this subject be diagnosed with?') # hard coded
                                 label = doc.split('The diagnosis is ')[1].split('.')[0]
-                                label = label.replace('AD','Dementia')
-                                label = label.replace('Demented','Dementia')
-                                label = label.replace('NC','Not demented')
-                                label = label.replace('CN','Not demented')
-                                label = label.replace('Nondemented','Not demented')
-                                label = label.replace('control','Not demented')
-                                label = label.replace('MCI','mild cognitive impairment (MCI)')
+                                # label = label.replace('AD','Dementia')
+                                # label = label.replace('Demented','Dementia')
+                                # label = label.replace('NC','Not demented')
+                                # label = label.replace('CN','Not demented')
+                                # label = label.replace('Nondemented','Not demented')
+                                # label = label.replace('control','Not demented')
+                                # label = label.replace('MCI','mild cognitive impairment (MCI)')
                                 answer.append(label)
                                 tq.append(doc.split('The diagnosis is ')[0] + 'Question: What will this subject be diagnosed with? Answer: ')
 

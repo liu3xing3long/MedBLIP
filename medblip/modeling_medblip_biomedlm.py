@@ -51,6 +51,7 @@ class MedBLIPModel_biomedlm(Blip2Base):
         self.Qformer, self.query_tokens = self.init_Qformer(
             num_query_token, self.visual_encoder.num_features
         )
+        
         # self.Qformer.cls = None
         # self.Qformer.bert.embeddings.word_embeddings = None
         # self.Qformer.bert.embeddings.position_embeddings = None
@@ -108,13 +109,13 @@ class MedBLIPModel_biomedlm(Blip2Base):
                 text.append(doc.split('The diagnosis is ')[0])
                 question.append('What will this subject be diagnosed with?') # hard coded
                 label = doc.split('The diagnosis is ')[1].split('.')[0]
-                label = label.replace('AD','Dementia')
-                label = label.replace('Demented','Dementia')
-                label = label.replace('NC','Not demented')
-                label = label.replace('CN','Not demented')
-                label = label.replace('Nondemented','Not demented')
-                label = label.replace('control','Not demented')
-                label = label.replace('MCI','mild cognitive impairment (MCI)')
+                # label = label.replace('AD','Dementia')
+                # label = label.replace('Demented','Dementia')
+                # label = label.replace('NC','Not demented')
+                # label = label.replace('CN','Not demented')
+                # label = label.replace('Nondemented','Not demented')
+                # label = label.replace('control','Not demented')
+                # label = label.replace('MCI','mild cognitive impairment (MCI)')
                 answer.append(label)
                 qa.append('Question: What will this subject be diagnosed with? Answer: ' + label)
                 tq.append(doc.split('The diagnosis is ')[0] + 'Question: What will this subject be diagnosed with? Answer: ')

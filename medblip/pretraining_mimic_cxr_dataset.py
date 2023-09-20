@@ -1,3 +1,4 @@
+import os
 import random
 from collections import defaultdict
 
@@ -64,23 +65,25 @@ class MIMICCXRDataset(BaseDataset):
         import torch
         dict_batch = super().collate(batch, mlm_collator)
 
-        # print('->' * 10 + 'batch contents' + '->' * 10)
-        # for k, v in dict_batch.items():
-        #     if isinstance(v, torch.Tensor):
-        #         content_shape = v.shape
-        #     elif isinstance(v, list):
-        #         content_shape = len(v)
-        #     else:
-        #         content_shape = 0
+        if False:
+            print('->' * 10 + 'batch contents' + '->' * 10)
+            for k, v in dict_batch.items():
+                if isinstance(v, torch.Tensor):
+                    content_shape = v.shape
+                elif isinstance(v, list):
+                    content_shape = len(v)
+                else:
+                    content_shape = 0
 
-        #     print(fr'key {k}, type {type(v)}, shape {content_shape}')
+                print(fr'key {k}, type {type(v)}, shape {content_shape}')
 
-        #     if k == 'text':
-        #         for vvidx, vv in enumerate(v):
-        #             print(f'\t {k}, {vvidx}: {vv}')
-        #     if k == 'image':
-        #             print(f'\t {k}, {v[0].shape}')
-        # print('<-' * 10 + 'batch contents' + '<-' * 10)
+                if k == 'text':
+                    for vvidx, vv in enumerate(v):
+                        print(f'\t {k}, {vvidx}: {vv}')
+                if k == 'image':
+                        print(f'\t {k}, {v[0].shape}')
+            print(fr'labels, {dict_batch["txt_labels"][0]}')
+            print('<-' * 10 + 'batch contents' + '<-' * 10)
 
         inputs = defaultdict(list)
         inputs['images'] = dict_batch['image']

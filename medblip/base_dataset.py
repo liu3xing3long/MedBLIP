@@ -12,6 +12,9 @@ from torch.utils.data import DataLoader
 from transformers import DataCollatorForLanguageModeling, BertTokenizerFast, RobertaTokenizerFast
 from .data_collator import DataCollatorForWholeEntityMask
 
+FG_TEXT_LIST = ['normal', 'pleural effusion', 'opacity', 'pneumothorax', 'edema', 'atelectasis',  'tube', 'consolidation','enlarged cardiomediastinum','tip', 'pneumonia','line','cardiomegaly', 'fracture','calcification',
+                'device','engorgement',  'nodule', 'wire',  'pacemaker', 'pleural thicken', 'marking', 'scar', 'hyperinflate', 'blunt',  'collapse', 'emphysema', 'aerate', 'mass','infiltration', 'obscure', 'deformity', 'hernia',
+                'drainage', 'distention', 'shift', 'stent', 'lesion', 'hardware', 'dilation',  'aspiration']
 
 def get_pretrained_tokenizer(from_pretrained):
     if torch.distributed.is_initialized():
@@ -78,10 +81,6 @@ class BaseDataset(torch.utils.data.Dataset):
             ]
             self.table_names = list()
             for i, name in enumerate(names):
-                
-                print(name)
-                print(len(tables))
-
                 self.table_names += [name] * len(tables[i])
             self.table = pa.concat_tables(tables, promote=True)
             if text_column_name != "":
@@ -96,6 +95,39 @@ class BaseDataset(torch.utils.data.Dataset):
         # Read Entities
         self.all_img_ents = self.table["img_ents"].to_pandas().tolist()
         self.all_txt_ents = self.table["txt_ents"].to_pandas().tolist()
+        print('all_img_ents length: ', len(self.all_img_ents))
+        print('all_txt_ents length: ', len(self.all_txt_ents))
+
+        ########################################################################
+        # read labels
+        fulllabels = open(fr"{data_dir}/fg_radgraph_metric.csv").read().strip().split("\n")[1:]
+        imageid2labels = {os.path.basename(fl.split(',')[0]): fl.split(',')[1: ] for fl in fulllabels}
+        # link labels
+        self.all_fg_radgraph_labels = []
+        fullimageids = self.table["image_id"].to_pandas().tolist()
+        valid_all_fg_radgraph_labels = 0
+        for fiid in fullimageids:
+            iid = os.path.basename(fiid)
+            str_labels = []
+            if iid in imageid2labels:
+                this_label_list = imageid2labels[iid]
+                # print(fr'{iid}  -> {this_label_list}')
+                for idx, tl in enumerate(this_label_list):
+                    if eval(tl) >= 1:
+                        str_labels.append(FG_TEXT_LIST[idx])
+                    else:
+                        pass
+            else:
+                pass
+            if len(str_labels) > 0:
+                # print(fr'imageid {iid}, labels {str_labels}')
+                valid_all_fg_radgraph_labels += 1
+            self.all_fg_radgraph_labels.append(str_labels)
+        print('all_fg_radgraph_labels length: ', len(self.all_fg_radgraph_labels), 
+              'validlength: ', valid_all_fg_radgraph_labels)
+        print('image length: ', len(self.table['image']))
+
+        ########################################################################
         self.ent2id = open(fr"{data_dir}/knowledge/entity2id.txt").read().strip().split("\n")[1:]
         self.ent2id = {kv.split("\t")[0]: kv.split("\t")[2] for kv in self.ent2id}
         self.id2ent = {v: k for k, v in self.ent2id.items()}
@@ -111,6 +143,7 @@ class BaseDataset(torch.utils.data.Dataset):
         else:
             for i in range(len(self.table)):
                 self.index_mapper[i] = (i, None)
+        print('index_mapper length: ', len(self.index_mapper))
 
         ###########################################################################################
         # Tokenizer
@@ -138,6 +171,10 @@ class BaseDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.index_mapper)
+
+    def get_strlabels(self, index):
+        index, caption_index = self.index_mapper[index]
+        return self.all_fg_radgraph_labels[index]
 
     def get_raw_image(self, index, image_key="image"):
         index, caption_index = self.index_mapper[index]
@@ -167,6 +204,13 @@ class BaseDataset(torch.utils.data.Dataset):
     def get_text(self, raw_index):
         index, caption_index = self.index_mapper[raw_index]
         text = self.all_texts[index][caption_index]
+
+        #############################################
+        radgraph_text_list = self.get_strlabels(raw_index)
+        if len(radgraph_text_list) > 0:
+            text += fr'. The diagnosis is {".".join(radgraph_text_list)}'
+        #############################################
+
         encoding = self.tokenizer(
             text,
             padding="max_length",
@@ -188,7 +232,7 @@ class BaseDataset(torch.utils.data.Dataset):
             "cap_index": caption_index,
             "raw_index": raw_index,
             "img_label": img_label,
-            "txt_label": txt_label
+            "txt_label": txt_label,
         }
 
     def get_false_text(self, rep, selected_index=None):
