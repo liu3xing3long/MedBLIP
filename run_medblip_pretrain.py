@@ -79,7 +79,7 @@ train_config = {
 #     )
 
 traindata = MIMICCXRDataset(
-    data_dir='/home/liuxinglong/work/code/ARL/data/', 
+    data_dir='../ARL/data/', 
     transform_keys = ["clip"],
     image_size = 224,
     split='train')
@@ -91,7 +91,7 @@ trainloader = DataLoader(traindata,
     num_workers=4)
 
 val_data = MIMICCXRDataset(
-    data_dir='/home/liuxinglong/work/code/ARL/data/', 
+    data_dir='../ARL/data/', 
     transform_keys = ["clip"],
     image_size = 224,
     split='test')
