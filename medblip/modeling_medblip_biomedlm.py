@@ -51,9 +51,9 @@ class MedBLIPModel_biomedlm(Blip2Base):
         self.Qformer, self.query_tokens = self.init_Qformer(
             num_query_token, self.visual_encoder.num_features
         )
-        self.Qformer.cls = None
-        self.Qformer.bert.embeddings.word_embeddings = None
-        self.Qformer.bert.embeddings.position_embeddings = None
+        # self.Qformer.cls = None
+        # self.Qformer.bert.embeddings.word_embeddings = None
+        # self.Qformer.bert.embeddings.position_embeddings = None
         # for layer in self.Qformer.bert.encoder.layer:
         #     layer.output = None
         #     layer.intermediate = None
@@ -126,7 +126,6 @@ class MedBLIPModel_biomedlm(Blip2Base):
                 qa.append('Question: What will this subject be diagnosed with? Answer: ')
                 tq.append(doc.split('The diagnosis is ')[0] + 'Question: What will this subject be diagnosed with? Answer: ')
 
-
         with self.maybe_autocast():
             image_embeds = self.ln_vision(self.visual_encoder(image))
         image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
@@ -148,7 +147,6 @@ class MedBLIPModel_biomedlm(Blip2Base):
             text_tokens.input_ids, 
             attention_mask=text_tokens.attention_mask, 
             return_dict=True,)
-
         
         qa_tokens = self.tokenizer(
             qa,
@@ -175,7 +173,6 @@ class MedBLIPModel_biomedlm(Blip2Base):
         sim_t2i, _ = sim_t2q.max(-1)
         sim_t2i = sim_t2i / self.temp
 
-
         bs = image.size(0)
         targets = torch.linspace(0, bs - 1, bs, dtype=int).to(image.device)
 
@@ -192,7 +189,6 @@ class MedBLIPModel_biomedlm(Blip2Base):
         sim_t2i, _ = sim_t2q.max(-1)
         sim_t2i = sim_t2i / self.temp
 
-
         bs = image.size(0)
         targets = torch.linspace(0, bs - 1, bs, dtype=int).to(image.device)
 
@@ -200,8 +196,6 @@ class MedBLIPModel_biomedlm(Blip2Base):
             F.cross_entropy(sim_i2t, targets, label_smoothing=0.1)
             + F.cross_entropy(sim_t2i, targets, label_smoothing=0.1)
         ) / 2
-
-
 
         img_embeds = self.proj(query_output.last_hidden_state) # bs 32 
         atts_img = torch.ones(img_embeds.size()[:-1], dtype=torch.long).to(image.device)
@@ -231,10 +225,18 @@ class MedBLIPModel_biomedlm(Blip2Base):
         )
 
         targets = torch.cat([input_targets, empty_img_targets, output_targets], dim=1) # bs 32+txt_len (这里的32都是-100不计算loss)
+        targets = targets.long()
 
-        inputs_txt_embeds = self.lm_model.transformer.wte(input_tokens.input_ids) # bs txt_len 2560
-        outputs_txt_embeds = self.lm_model.transformer.wte(output_tokens.input_ids) # bs txt_len 2560
-        inputs_embeds = torch.cat([inputs_txt_embeds,img_embeds,outputs_txt_embeds], dim=1)
+        # print(fr'input_tokens type {input_tokens.input_ids.type()}')
+        # print(fr'output_tokens type {output_tokens.input_ids.type()}')
+
+        inputs_txt_embeds = self.lm_model.transformer.wte(input_tokens.input_ids.long()) # bs txt_len 2560
+        outputs_txt_embeds = self.lm_model.transformer.wte(output_tokens.input_ids.long()) # bs txt_len 2560
+
+        # print(fr'inputs_txt_embeds type {inputs_txt_embeds.type()}')
+        # print(fr'img_embeds type {img_embeds.type()}')
+        # print(fr'outputs_txt_embeds type {outputs_txt_embeds.type()}')
+        inputs_embeds = torch.cat([inputs_txt_embeds, img_embeds, outputs_txt_embeds], dim=1)
 
         attention_mask = torch.cat([input_tokens.attention_mask,atts_img,output_tokens.attention_mask], dim=1) # bs 32+input_txt_len
 

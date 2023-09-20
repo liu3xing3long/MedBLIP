@@ -90,8 +90,6 @@ class Trainer:
 
                 if not skip_scheduler:
                     scheduler.step()
-                    
-
 
                 if train_iter == (steps_per_epoch-1) and 't5' in output_path:
                     eval_data_iterator = iter(eval_dataloader)

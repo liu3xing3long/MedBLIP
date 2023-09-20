@@ -1125,6 +1125,9 @@ class GPT2LMHeadModel(GPT2PreTrainedModel):
             # Flatten the tokens
             loss_fct = CrossEntropyLoss()
             # import pdb;pdb.set_trace()
+
+            print(fr'shift_logits {shift_logits.type()}')
+            print(fr'shift_labels {shift_labels.type()}')
             loss = loss_fct(
                 shift_logits.view(-1, self.config.vocab_size), 
                 shift_labels.view(-1)

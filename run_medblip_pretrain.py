@@ -10,6 +10,8 @@ from medblip.dataset import ImageTextContrastiveDataset,ZeroShotImageDataset
 from medblip.dataset import ImageTextContrastiveCollator,ZeroShotImageCollator
 from medblip.trainer import Trainer
 
+from medblip.pretraining_mimic_cxr_dataset import MIMICCXRDataset
+
 # set random seed
 seed = 42
 random.seed(seed)
@@ -33,50 +35,76 @@ train_config = {
     'save_steps': 1000,
 }
 
-train_datalist = [
-    'ADNI-train',
-    'NACC-train',
-    'OASIS1-aligned_norm-train',
-    'OASIS1-aligned_orig-train',
-    'OASIS1-norm-train',
-    'OASIS1-orig-train',
-    'OASIS2-train',
-]
+# train_datalist = [
+#     'mimic_cxr_train',
 
-val_datalist = [
-    # 'ADNI-test',
-    'NACC-test',
-    # 'OASIS2-test',
-    # 'AIBL-test',
-    # 'MIRIAD-test',
-]
+#     # 'ADNI-train',
+#     # 'NACC-train',
+#     # 'OASIS1-aligned_norm-train',
+#     # 'OASIS1-aligned_orig-train',
+#     # 'OASIS1-norm-train',
+#     # 'OASIS1-orig-train',
+#     # 'OASIS2-train',
+# ]
 
-traindata = ImageTextContrastiveDataset(datalist=train_datalist)
-train_collate_fn = ImageTextContrastiveCollator()
+# val_datalist = [
+#     'mimic_cxr_val', 
+
+#     # 'ADNI-test',
+#     # 'NACC-test',
+#     # 'OASIS2-test',
+#     # 'AIBL-test',
+#     # 'MIRIAD-test',
+# ]
+
+# traindata = ImageTextContrastiveDataset(datalist=train_datalist)
+# train_collate_fn = ImageTextContrastiveCollator()
+# trainloader = DataLoader(traindata,
+#     batch_size=7,
+#     collate_fn=train_collate_fn,
+#     shuffle=True,
+#     pin_memory=True,
+#     num_workers=4,
+#     drop_last=True
+#     )
+
+# val_data = ZeroShotImageDataset(datalist=val_datalist)
+# val_collate_fn = ZeroShotImageCollator()
+# valloader = DataLoader(val_data,
+#     batch_size=7,
+#     collate_fn=val_collate_fn,
+#     shuffle=False,
+#     pin_memory=True,
+#     num_workers=4,
+#     )
+
+traindata = MIMICCXRDataset(
+    data_dir='/home/liuxinglong/work/code/ARL/data/', 
+    transform_keys = ["clip"],
+    image_size = 224,
+    split='val')
 trainloader = DataLoader(traindata,
-    batch_size=7,
-    collate_fn=train_collate_fn,
+    batch_size=4,
     shuffle=True,
     pin_memory=True,
-    num_workers=4,
-    drop_last=True
-    )
+    collate_fn=traindata.collate,
+    num_workers=4)
 
-val_data = ZeroShotImageDataset(datalist=val_datalist)
-val_collate_fn = ZeroShotImageCollator()
+val_data = MIMICCXRDataset(
+    data_dir='/home/liuxinglong/work/code/ARL/data/', 
+    transform_keys = ["clip"],
+    image_size = 224,
+    split='val')
 valloader = DataLoader(val_data,
-    batch_size=7,
-    collate_fn=val_collate_fn,
+    batch_size=4,
     shuffle=False,
     pin_memory=True,
-    num_workers=4,
-    )
-
+    collate_fn=val_data.collate,
+    num_workers=4)
 
 
 t5=False
 biomedlm=True
-
 
 if t5:
     model = MedBLIPModel_t5(

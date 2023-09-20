@@ -179,14 +179,17 @@ class Block(nn.Module):
             x = x + self.drop_path(self.gamma_2 * self.mlp(self.norm2(x)))
         return x
 
-
 class PatchEmbed(nn.Module):
     """ Image to Patch Embedding
     """
     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
+        
         super().__init__()
-        img_size = to_3tuple(img_size)
-        patch_size = to_3tuple(patch_size)
+        # img_size = to_3tuple(img_size)
+        # patch_size = to_3tuple(patch_size)
+
+        img_size = (3, img_size, img_size)
+        patch_size = (3, patch_size, patch_size)
         num_patches = (img_size[2] // patch_size[2]) * (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
         self.patch_shape = (img_size[0] // patch_size[0], img_size[1] // patch_size[1], img_size[2] // patch_size[2])
         self.img_size = img_size
