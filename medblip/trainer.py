@@ -67,9 +67,8 @@ class Trainer:
                 data = next(data_iterator)
 
                 if use_amp:
-                    # with autocast():
-                    #     loss = model(data)
-                    loss = model(data)
+                    with autocast():
+                        loss = model(data)
                     loss_value = loss['loss']
                     scale_before_step = scaler.get_scale()
                     scaler.scale(loss_value).backward()
@@ -87,7 +86,7 @@ class Trainer:
 
                 if train_iter % 100 == 0:
                     print('Epoch[{}/{}]/Iter[{}/{}]: loss: {:.4f}'.format(epoch, epochs, train_iter,steps_per_epoch,loss_value))
-                
+
                 optimizer.zero_grad()
 
                 if not skip_scheduler:
