@@ -249,16 +249,16 @@ class MedBLIPModel_biomedlm(Blip2Base):
                 labels=targets,)
 
         loss_lm = outputs.loss
-        loss=loss_itc+loss_lm
+        loss=loss_itc + loss_lm
         print('loss_itc', loss_itc, 'loss_lm', outputs.loss)
         pred = self.tokenizer.batch_decode(outputs['logits'].argmax(-1), skip_special_tokens=True)
 
-        for i in range(bs):
-            print('train_iter[{}/{}] text: '.format(i,bs), text[i])
-            print('train_iter[{}/{}] question: '.format(i,bs), question[i])
-            print('train_iter[{}/{}] gt_answer: '.format(i,bs), answer[i])
-            print('train_iter[{}/{}] answer: '.format(i,bs), pred[i])
-            print('-----------------------------------------------')
+        # for i in range(bs):
+        #     print('train_iter[{}/{}] text: '.format(i,bs), text[i])
+        #     print('train_iter[{}/{}] question: '.format(i,bs), question[i])
+        #     print('train_iter[{}/{}] gt_answer: '.format(i,bs), answer[i])
+        #     print('train_iter[{}/{}] answer: '.format(i,bs), pred[i])
+        #     print('-----------------------------------------------')
 
         return {"loss": loss}
 

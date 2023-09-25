@@ -3,6 +3,7 @@ import random
 
 import numpy as np
 import torch
+from torch.nn import DataParallel
 from torch.utils.data import DataLoader
 from medblip.modeling_medblip_t5 import MedBLIPModel_t5
 from medblip.modeling_medblip_biomedlm import MedBLIPModel_biomedlm
@@ -23,7 +24,8 @@ os.environ['TOKENIZERS_PARALLELISM']='false'
 
 # set cuda devices
 os.environ['CUDA_VISIBLE_DEVICES']='0'
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
+# device = "cuda:0" if torch.cuda.is_available() else "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 train_config = {
     'num_epochs': 100,
@@ -82,13 +84,13 @@ traindata = MIMICCXRDataset(
     data_dir='../ARL/data/', 
     transform_keys = ["clip"],
     image_size = 224,
-    split='train')
+    split='test')
 trainloader = DataLoader(traindata,
-    batch_size=4,
+    batch_size=8,
     shuffle=True,
     pin_memory=True,
     collate_fn=traindata.collate,
-    num_workers=4)
+    num_workers=8)
 
 val_data = MIMICCXRDataset(
     data_dir='../ARL/data/', 
@@ -96,11 +98,11 @@ val_data = MIMICCXRDataset(
     image_size = 224,
     split='test')
 valloader = DataLoader(val_data,
-    batch_size=4,
+    batch_size=8,
     shuffle=False,
     pin_memory=True,
     collate_fn=val_data.collate,
-    num_workers=4)
+    num_workers=8)
 
 
 t5=False
@@ -130,8 +132,16 @@ if biomedlm:
     model = MedBLIPModel_biomedlm(
         lm_model="stanford-crfm/BioMedLM",
     )
-    # model.load_state_dict(torch.load('./checkpoints/vision_text_pretrain/biomedlm/epoch11.pth',map_location='cpu'),strict=False)
-    model.cuda()
+
+    ##############################################
+    start_epoch = 5
+    model.load_state_dict(torch.load(fr'./checkpoints/vision_text_pretrain/biomedlm/epoch{start_epoch}.pth',map_location='cpu'))
+    ##############################################
+
+    n_gpus = torch.cuda.device_count()
+    print(fr'device count {n_gpus}')
+    model = model.cuda()
+
     model_save_path = f'./checkpoints/vision_text_pretrain/biomedlm'
     trainer = Trainer()
     trainer.train(
@@ -144,6 +154,7 @@ if biomedlm:
         output_path=model_save_path,
         weight_decay=train_config['weight_decay'],
         use_amp=True,
+        start_epoch=start_epoch,
         )
     
 

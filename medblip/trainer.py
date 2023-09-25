@@ -29,6 +29,7 @@ class Trainer:
         max_grad_norm: float = 1,
         use_amp: bool = False,
         accumulation_steps: int = 1,
+        start_epoch: int = 1,
         ):
         '''
         output_path: model save path
@@ -58,7 +59,7 @@ class Trainer:
         model = model.cuda()
 
         skip_scheduler = False
-        for epoch in range(epochs):
+        for epoch in range(start_epoch, epochs):
             data_iterator = iter(dataloader)
             for train_iter in range(steps_per_epoch):
                 model.zero_grad()
@@ -66,8 +67,9 @@ class Trainer:
                 data = next(data_iterator)
 
                 if use_amp:
-                    with autocast():
-                        loss = model(data)
+                    # with autocast():
+                    #     loss = model(data)
+                    loss = model(data)
                     loss_value = loss['loss']
                     scale_before_step = scaler.get_scale()
                     scaler.scale(loss_value).backward()
@@ -83,9 +85,9 @@ class Trainer:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
                     optimizer.step()
 
-                print('Epoch[{}/{}]/Iter[{}/{}]: loss: {:.4f}'.format(epoch,epochs,train_iter,steps_per_epoch,loss_value))
+                if train_iter % 100 == 0:
+                    print('Epoch[{}/{}]/Iter[{}/{}]: loss: {:.4f}'.format(epoch, epochs, train_iter,steps_per_epoch,loss_value))
                 
-
                 optimizer.zero_grad()
 
                 if not skip_scheduler:
@@ -124,14 +126,20 @@ class Trainer:
                                 answer.append('')
                                 tq.append(doc.split('The diagnosis is ')[0] + 'Question: What will this subject be diagnosed with? Answer: ')
                         model.eval()
-                        res = model.generate({"images": images, 'prompt': tq}) # "images": images, 
-                        
-                        for i in range(bs):
-                            print('eval_iter[{}/{}][{}/{}] report: '.format(eval_iter,num_iter,i,bs), eval_data['reports'][i])
-                            print('eval_iter[{}/{}][{}/{}] prompt: '.format(eval_iter,num_iter,i,bs), tq[i])
-                            print('eval_iter[{}/{}][{}/{}] gt_answer: '.format(eval_iter,num_iter,i,bs), answer[i])
-                            print('eval_iter[{}/{}][{}/{}] answer: '.format(eval_iter,num_iter,i,bs), res[i])
-                            print('-----------------------------------------------')
+
+                        if isinstance(model, torch.nn.DataParallel):
+                            res = model.module.generate({"images": images, 'prompt': tq}) # "images": images,
+                        else:
+                            res = model.generate({"images": images, 'prompt': tq}) # "images": images,
+
+                        if eval_iter % 100 == 0:
+                            for i in range(bs):
+                                print('-----------------------------------------------')
+                                print('eval_iter[{}/{}][{}/{}] report: '.format(eval_iter,num_iter,i,bs), eval_data['reports'][i])
+                                print('eval_iter[{}/{}][{}/{}] prompt: '.format(eval_iter,num_iter,i,bs), tq[i])
+                                print('eval_iter[{}/{}][{}/{}] gt_answer: '.format(eval_iter,num_iter,i,bs), answer[i])
+                                print('eval_iter[{}/{}][{}/{}] answer: '.format(eval_iter,num_iter,i,bs), res[i])
+                                print('-----------------------------------------------')
 
                 if train_iter == (1) and 'biomedlm' in output_path:
                     eval_data_iterator = iter(eval_dataloader)
@@ -166,14 +174,20 @@ class Trainer:
                                 answer.append('')
                                 tq.append(doc.split('The diagnosis is ')[0] + 'Question: What will this subject be diagnosed with? Answer: ')
                         model.eval()
-                        res = model.generate({"images": images, 'prompt': tq}) # "images": images, 
-                        
-                        for i in range(bs):
-                            print('eval_iter[{}/{}][{}/{}] report: '.format(eval_iter,num_iter,i,bs), eval_data['reports'][i])
-                            print('eval_iter[{}/{}][{}/{}] prompt: '.format(eval_iter,num_iter,i,bs), tq[i])
-                            print('eval_iter[{}/{}][{}/{}] gt_answer: '.format(eval_iter,num_iter,i,bs), answer[i])
-                            print('eval_iter[{}/{}][{}/{}] answer: '.format(eval_iter,num_iter,i,bs), res[i])
-                            print('-----------------------------------------------')
+
+                        if isinstance(model, torch.nn.DataParallel):
+                            res = model.module.generate({"images": images, 'prompt': tq}) # "images": images,
+                        else:
+                            res = model.generate({"images": images, 'prompt': tq}) # "images": images,
+
+                        if eval_iter % 100 == 0:
+                            for i in range(bs):
+                                print('-----------------------------------------------')
+                                print('eval_iter[{}/{}][{}/{}] report: '.format(eval_iter,num_iter,i,bs), eval_data['reports'][i])
+                                print('eval_iter[{}/{}][{}/{}] prompt: '.format(eval_iter,num_iter,i,bs), tq[i])
+                                print('eval_iter[{}/{}][{}/{}] gt_answer: '.format(eval_iter,num_iter,i,bs), answer[i])
+                                print('eval_iter[{}/{}][{}/{}] answer: '.format(eval_iter,num_iter,i,bs), res[i])
+                                print('-----------------------------------------------')
 
             self._save_ckpt(model,epoch,output_path)
 
@@ -200,5 +214,10 @@ class Trainer:
     def _save_ckpt(self, model, epoch, save_dir):
         if not os.path.exists(save_dir): 
             os.makedirs(save_dir)
-        state_dict = model.state_dict()
+
+        if isinstance(model, torch.nn.DataParallel):
+            state_dict = model.module.state_dict()
+        else:
+            state_dict = model.state_dict()
+
         torch.save(state_dict, os.path.join(save_dir, 'epoch{}.pth'.format(epoch)))

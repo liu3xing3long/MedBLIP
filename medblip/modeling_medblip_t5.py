@@ -249,8 +249,6 @@ class MedBLIPModel_t5(Blip2Base):
             loss=loss_itc+loss_lm
             print('loss_itc', loss_itc, 'loss_lm', outputs.loss)
 
-
-
             pred = self.t5_tokenizer.batch_decode(outputs['logits'].argmax(-1), skip_special_tokens=True)
 
             for i in range(bs):
