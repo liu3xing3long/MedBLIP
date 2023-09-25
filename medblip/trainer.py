@@ -124,8 +124,12 @@ class Trainer:
                                 answer.append('')
                                 tq.append(doc.split('The diagnosis is ')[0] + 'Question: What will this subject be diagnosed with? Answer: ')
                         model.eval()
-                        res = model.generate({"images": images, 'prompt': tq}) # "images": images, 
-                        
+
+                        if isinstance(model, torch.nn.DataParallel):
+                            res = model.module.generate({"images": images, 'prompt': tq}) # "images": images, 
+                        else:
+                            res = model.generate({"images": images, 'prompt': tq}) # "images": images, 
+
                         for i in range(bs):
                             print('eval_iter[{}/{}][{}/{}] report: '.format(eval_iter,num_iter,i,bs), eval_data['reports'][i])
                             print('eval_iter[{}/{}][{}/{}] prompt: '.format(eval_iter,num_iter,i,bs), tq[i])
@@ -166,8 +170,12 @@ class Trainer:
                                 answer.append('')
                                 tq.append(doc.split('The diagnosis is ')[0] + 'Question: What will this subject be diagnosed with? Answer: ')
                         model.eval()
-                        res = model.generate({"images": images, 'prompt': tq}) # "images": images, 
                         
+                        if isinstance(model, torch.nn.DataParallel):
+                            res = model.module.generate({"images": images, 'prompt': tq}) # "images": images, 
+                        else:
+                            res = model.generate({"images": images, 'prompt': tq}) # "images": images, 
+
                         for i in range(bs):
                             print('eval_iter[{}/{}][{}/{}] report: '.format(eval_iter,num_iter,i,bs), eval_data['reports'][i])
                             print('eval_iter[{}/{}][{}/{}] prompt: '.format(eval_iter,num_iter,i,bs), tq[i])
@@ -200,5 +208,9 @@ class Trainer:
     def _save_ckpt(self, model, epoch, save_dir):
         if not os.path.exists(save_dir): 
             os.makedirs(save_dir)
-        state_dict = model.state_dict()
+        
+        if isinstance(model, torch.nn.DataParallel):
+            state_dict = model.module.state_dict()
+        else:
+            state_dict = model.state_dict()
         torch.save(state_dict, os.path.join(save_dir, 'epoch{}.pth'.format(epoch)))

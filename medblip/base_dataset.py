@@ -109,6 +109,7 @@ class BaseDataset(torch.utils.data.Dataset):
         for fiid in fullimageids:
             iid = os.path.basename(fiid)
             str_labels = []
+            # str_labels = [os.path.splitext(iid)[0], ]
             if iid in imageid2labels:
                 this_label_list = imageid2labels[iid]
                 # print(fr'{iid}  -> {this_label_list}')
@@ -208,7 +209,7 @@ class BaseDataset(torch.utils.data.Dataset):
         #############################################
         radgraph_text_list = self.get_strlabels(raw_index)
         if len(radgraph_text_list) > 0:
-            text += fr'. The diagnosis is {".".join(radgraph_text_list)}'
+            text += fr'. The diagnosis is {" ".join(radgraph_text_list)}.'
         #############################################
 
         encoding = self.tokenizer(

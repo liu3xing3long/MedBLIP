@@ -131,7 +131,9 @@ if biomedlm:
         lm_model="stanford-crfm/BioMedLM",
     )
     # model.load_state_dict(torch.load('./checkpoints/vision_text_pretrain/biomedlm/epoch11.pth',map_location='cpu'),strict=False)
+    # model = DataParallel(model)
     model.cuda()
+    
     model_save_path = f'./checkpoints/vision_text_pretrain/biomedlm'
     trainer = Trainer()
     trainer.train(

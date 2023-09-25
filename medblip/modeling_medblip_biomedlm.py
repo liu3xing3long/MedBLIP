@@ -250,7 +250,7 @@ class MedBLIPModel_biomedlm(Blip2Base):
 
         loss_lm = outputs.loss
         loss=loss_itc+loss_lm
-        print('loss_itc', loss_itc, 'loss_lm', outputs.loss)
+        print('loss_itc', loss_itc.item(), 'loss_lm', outputs.loss.item())
         pred = self.tokenizer.batch_decode(outputs['logits'].argmax(-1), skip_special_tokens=True)
 
         for i in range(bs):
